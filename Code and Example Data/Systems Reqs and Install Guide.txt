@@ -1,0 +1,33 @@
+Resonant Galvo Registration Code for In Vivo Stacks Operation Guide
+
+Written by KPQ and JDJ
+Quantitative Tissue Diagnostics Lab
+University of Arkansas
+Department of Biomedical Engineering
+
+
+---RECOMMENDED SYSTEM REQUIREMENTS---
+
+Minimum
+
+OS: Windows 7 
+System Type: 64-bit
+Processor: Intel(R) Core(TM) i7-4790 CPU @ 3.60 GHz
+Memory (RAM): 16.0 GB
+Display: Intel(R) HD Graphics 4600
+
+---INSTALLATION INSTRUCTIONS---
+
+Required: Matlab 2015b (or any more recent version)
+Verified on Matlab 2015b, 2017b, 2018b
+
+1. Download file labeled "ResonantGalvoRegistrationCode_Matlab2015b".
+
+2. Open Matlab 2015b.
+
+3. Drag the downloaded file into a dedicated MATLAB folder path (Default: "C:\Users\user\Documents\MATLAB) 
+   or copy and paste into a blank script and save in desired location.
+
+4. Installation complete!
+
+Expected Run Time for Example Data Set: 5-10 minutes

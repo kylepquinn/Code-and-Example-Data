@@ -1,0 +1,229 @@
+% Resonant Galvo Registration Code for In Vivo Stacks
+% Quantitative Tissue Diagnostics Lab
+% Written by Kyle P Quinn & Jake D Jones
+% Department of Biomedical Engineering, University of Arkansas
+% 123 John A. White Jr. Engineering Hall
+% Fayetteville, AR, 72701, USA
+% Last run in Matlab 2015b
+
+clear all;close all;
+%% Change Start Directory
+start='F:\Example Image Data';
+cd(start);
+%%
+q=dir(['Day','*']);
+qq=struct2cell(q);
+ll=length(q);
+%%
+for diri=1:ll
+    q3=char(qq(1,diri));
+    q3
+    cd([start,'\',q3]);
+    
+    q4=dir;
+    lq4=length(q4);
+    q5=struct2cell(q4);
+    for dirii=3:lq4;
+        dirii;
+        q6(dirii)=[q5(1,dirii)];
+        lq6=length(q6);
+        
+        q7=char(q6(dirii))
+        cd([start,'\',q3,'\',q7])
+        
+        q8=dir(['*WoundEdgeStack*']);
+        lq8=length(q8);
+        q9=struct2cell(q8);
+        for diriii=1:lq8;
+            q10(diriii)=[q9(1,diriii)];
+            foldername=char(q10(diriii));
+            
+            cd([start,'\',q3,'\',q7,'\',foldername]);
+
+fn=[foldername,'_Cycle00003_Ch3_'];
+ld=dir([fn,'*']);
+num=length(ld);
+
+disp('Processing 755 nm Channels...')
+for i=1:num % Slice number
+    i
+    for j=3:52 % Number of repetitions
+        % Changes # at end and converts to string
+        cn=num2str(j,'%05.0f');
+        
+        % Loads 50 images in corresponding slice for Ch2
+        fn2=[foldername,'_Cycle',cn,'_Ch3_']; 
+        ld2=dir([fn2,'*']);
+        A2(:,:,j-2)=imread(ld2(i).name);
+        
+        % Loads 50 images in corresponding slice for Ch1
+        fn1=[foldername,'_Cycle',cn,'_Ch2_']; 
+        ld1=dir([fn1,'*']);
+        A1(:,:,j-2)=imread(ld1(i).name);
+        
+    end
+    % Raw Average Image from each corresponding slice (Ch3)
+    B2(:,:,i)=mean(double(A2),3);
+    % Raw Average Image from each corresponding slice (Ch2)
+    B1(:,:,i)=mean(double(A1),3);
+    
+    [x y]=meshgrid(1:size(A2,1),1:size(A2,2));
+    
+    % X midpoint, Y midpoint
+    xm=mean(mean(x))-.5;
+    ym=mean(mean(y))-.5;
+    cl=ones(1,50);
+    A1s=[];
+    A2s=[];
+    
+    for j=1:50
+        % Registers resonant image slice to raw average image for same
+        % slice
+        c=real(fftshift(ifft2(fft2((B1(:,:,i)+B2(:,:,i))-mean(mean((B1(:,:,i)+B2(:,:,i))))).*fft2(rot90((A1(:,:,j)+A2(:,:,j))-mean(mean(A1(:,:,j)+A2(:,:,j))),2)))));
+        [a1 b1]=max(c);
+        [a2 b2]=max(a1);
+        % Registered point - midpoint
+        newcoordshift=[b1(b2)-xm b2-ym];
+        A1s(:,:,j)=circshift(A1(:,:,j),round(newcoordshift));
+        A2s(:,:,j)=circshift(A2(:,:,j),round(newcoordshift));
+        % Coorv is correlation value of each image to raw average
+        corrv(j)=a2;
+    end
+    
+    % mean and standard deviation of correlation values
+    mc=mean(corrv);
+    ms=std(corrv);
+    
+    % Matrix of how many images are registered and how many are too far
+    cl=(corrv>(mc-ms));
+    clm755(i,:)=cl;
+    
+    % Slices are now average-excluding images that were far off the raw
+    % average
+    B1s(:,:,i)=mean(double(A1s(:,:,find(cl))),3);
+    B2s(:,:,i)=mean(double(A2s(:,:,find(cl))),3);
+end
+
+save('ExclusionMatrix755.mat','clm755')
+%% Final Image Creation
+    uplim1=8192;
+    uplim2=8192;
+    botlim=0;
+    B2sf=(double(B2s)-botlim)/(uplim2-botlim);
+    B2sf=B2sf.*(B2sf<1)+(B2sf>=1);
+    B2sf=B2sf.*(B2sf>=0);
+    B2sf=(2^13).*B2sf;
+    
+    B1sf=(double(B1s)-botlim)/(uplim1-botlim);
+    B1sf=B1sf.*(B1sf<1)+(B1sf>=1);
+    B1sf=B1sf.*(B1sf>=0);
+    B1sf=(2^13).*B1sf;
+    clear im
+
+    for i=1:num
+        
+    im(:,:,1,i)=B1sf(:,:,i); %Ch2
+    im(:,:,2,i)=B2sf(:,:,i); %Ch3
+    im(:,:,3,i)=zeros(size(B1sf,1),size(B1sf,2));
+        title(i)
+        drawnow;
+        imwrite(uint16(im(:,:,2,i)), '755nmCh3.TIFF', 'writemode', 'append');
+        imwrite(uint16(im(:,:,1,i)), '755nmCh2.TIFF', 'writemode', 'append');
+    end
+disp('     Saving Processed Images...');
+close all;
+disp('755 Processing Complete')
+%%
+close all;
+
+cd([start,'\',q3,'\',q7,'\',foldername]);
+
+fn=[foldername,'_Cycle00003_Ch3_'];
+ld=dir([fn,'*']);
+num=length(ld);
+
+disp('Processing 900 nm Channels...')
+for i=1:num % Slice number
+    i
+    for j=3+52:52+52% Number of repetitions
+        cn=num2str(j,'%05.0f');
+        
+        fn2=[foldername,'_Cycle',cn,'_Ch3_']; 
+        ld2=dir([fn2,'*']);
+        A2(:,:,j-2-52)=imread(ld2(i).name);
+        
+        fn1=[foldername,'_Cycle',cn,'_Ch2_']; 
+        ld1=dir([fn1,'*']);
+        A1(:,:,j-2-52)=imread(ld1(i).name);
+        
+    end
+    B2(:,:,i)=mean(double(A2),3);
+    B1(:,:,i)=mean(double(A1),3);
+    [x y]=meshgrid(1:size(A2,1),1:size(A2,2));
+    xm=mean(mean(x))-.5;
+    ym=mean(mean(y))-.5;
+    cl=ones(1,50);
+    A1s=[];
+    A2s=[];
+    for j=1:50
+        
+        c=real(fftshift(ifft2(fft2((B1(:,:,i)+B2(:,:,i))-mean(mean((B1(:,:,i)+B2(:,:,i))))).*fft2(rot90((A1(:,:,j)+A2(:,:,j))-mean(mean(A1(:,:,j)+A2(:,:,j))),2)))));
+        
+        [a1 b1]=max(c);
+        [a2 b2]=max(a1);
+        newcoordshift=[b1(b2)-xm b2-ym];
+        A1s(:,:,j)=circshift(A1(:,:,j),round(newcoordshift));
+        A2s(:,:,j)=circshift(A2(:,:,j),round(newcoordshift));
+        corrv(j)=a2;
+        
+    end
+    
+    mc=mean(corrv);
+    ms=std(corrv);
+    
+    cl=(corrv>(mc-ms));
+    clm900(i,:)=cl;
+    
+    B1s(:,:,i)=mean(double(A1s(:,:,find(cl))),3);
+    
+    B2s(:,:,i)=mean(double(A2s(:,:,find(cl))),3);
+    
+end
+save('ExclusionMatrix900.mat','clm900')
+%% Final Image Creation
+    
+    uplim1=8192;
+    uplim2=8192;
+    botlim=0;
+    B2sf=(double(B2s)-botlim)/(uplim2-botlim);
+    B2sf=B2sf.*(B2sf<1)+(B2sf>=1);
+    B2sf=B2sf.*(B2sf>=0);
+    B2sf=(2^13).*B2sf;
+    
+    B1sf=(double(B1s)-botlim)/(uplim1-botlim);
+    B1sf=B1sf.*(B1sf<1)+(B1sf>=1);
+    B1sf=B1sf.*(B1sf>=0);
+    B1sf=(2^13).*B1sf;    
+    clear im
+
+    for i=1:num
+        
+    im(:,:,1,i)=B1sf(:,:,i); %Ch1
+    im(:,:,2,i)=B2sf(:,:,i); %Ch2
+    im(:,:,3,i)=zeros(size(B1sf,1),size(B1sf,2));
+        title(i)
+        drawnow;
+        imwrite(uint16(im(:,:,1,i)), '900nmCh2.TIFF', 'writemode', 'append')
+        imwrite(uint16(im(:,:,2,i)), '900nmCh3.TIFF', 'writemode', 'append')
+    end
+disp('     Saving Processed Images...');
+close all;
+disp('900 Processing Complete')
+
+        clear q10
+        end
+        clear q6
+    end
+end
+
+disp('Done')

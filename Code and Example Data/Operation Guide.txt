@@ -1,0 +1,37 @@
+Resonant Galvo Registration Code for In Vivo Stacks Operation Guide
+
+Written by KPQ and JDJ
+Quantitative Tissue Diagnostics Lab
+University of Arkansas
+Department of Biomedical Engineering
+
+Requires Matlab 2015b-2018b
+
+*Images were acqired with PrairieView 5.3, so indexing will 
+need to be changed if other acquisiton software was used.* 
+
+---OPERATION INSTRUCTIONS---
+
+1. Lauch Matlab (2015b or later) and open the software.
+
+2. Download corresponding "Example Image Data" folder.
+
+3. In line 10 of the code, you should see a variable "start" under the
+   label "Change Start Directory". Change the string to match the path
+   where the example data set was saved.
+
+4. Click the green "Run" button under the editor tab.
+
+5. Let code run. Processing is dependent on the number of images and stacks 
+   included, but expect the example data to take ~5-10 minutes for a standard, 
+   office-grade desktop.
+
+6. The expected output is two 16-bit .TIFF image stacks for the two acquisiton 
+   wavelengths after the processing described in Supplementary Figure 1.
+   Additionally, there will be two .mat files saved with the default save name 
+   "ExclusionMatrix". This is a binary matrix that displays which images were 
+   kept (1) and which were discarded (0) during the processing based on the number 
+   of images in a stack, and the number of stacks in an average.
+
+*Note: All example images were converted from native 16-bit into 8-bit to save
+ on required memory and download time. 
